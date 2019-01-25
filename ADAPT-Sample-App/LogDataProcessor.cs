@@ -5,13 +5,14 @@ using AgGateway.ADAPT.ApplicationDataModel.Equipment;
 using AgGateway.ADAPT.ApplicationDataModel.LoggedData;
 using AgGateway.ADAPT.ApplicationDataModel.Shapes;
 using AgGateway.ADAPT.ISOv4Plugin.ExtensionMethods;
+using AgGateway.ADAPT.Representation.RepresentationSystem;
 
 namespace ADAPT_Sample_App
 {
     public class LogDataProcessor
     {
         /*
-         * Note the use of foreach loops here. The unerlying IEnumerable's often use deferred execution to reduce memory usage.
+         * Note the use of foreach loops here. The underlying IEnumerable's often use deferred execution to reduce memory usage.
          * This means anything that causes multiple iterations of an IEnumerable will have a severe performance impact.
          * For instance, adaptDataModel.Documents.LoggedData.Count() will be extremely slow. Additionally, loading everything into
          * memory at once using adaptDataModel.Documents.LoggedData.ToList() or similar will consume a very large amount of memory.
@@ -61,6 +62,7 @@ namespace ADAPT_Sample_App
         private static void ProcessOperationData(OperationData operationData, Catalog catalog)
         {
             var sections = ProcessImplementSections(operationData, catalog);
+            var metersBySection = GetMetersBySection(sections);
 
             //Each SpatialRecord is equivalent to one row from an EIC LogBlock's SpatialLayer. 
             foreach (var spatialRecord in operationData.GetSpatialRecords.Invoke())
@@ -68,10 +70,9 @@ namespace ADAPT_Sample_App
                 var point = spatialRecord.Geometry as Point;
                 //The SpatialRecord has a value for each available meter (called WorkingData in ADAPT).
                 //Note that section status is treated as a WorkingData. Each controllable section will have a meter with representation of SectionStatus.
-                foreach (var section in sections)
+                foreach (var section in metersBySection.Keys)
                 {
-                    var metersForSection = section.GetWorkingDatas.Invoke();
-                    foreach (var meter in metersForSection)
+                    foreach (var meter in metersBySection[section])
                     {
                         var meterValue = spatialRecord.GetMeterValue(meter);
                     }
@@ -88,12 +89,13 @@ namespace ADAPT_Sample_App
          *   3: Row level. This represents a single row.
          *   Not every level will be present in every datacard. For example, you may have Master level and Section level data but no Meter level data.
          */
+
         private static List<DeviceElementUse> ProcessImplementSections(OperationData operationData, Catalog catalog)
         {
             var maxImplementSectionDepth = operationData.MaxDepth;
             for (int i = 0; i <= maxImplementSectionDepth; ++i)
             {
-                var sectionsAtThisDepth = operationData.GetDeviceElementUses.Invoke(i);
+                IEnumerable<DeviceElementUse> sectionsAtThisDepth = operationData.GetDeviceElementUses.Invoke(i);
                 foreach (var section in sectionsAtThisDepth)
                 {
                     //The order indicates the section's relative position on the implement. 0 is the left-most section, 1 is next to it, etc. 
@@ -108,6 +110,26 @@ namespace ADAPT_Sample_App
 
             //If you don't care about any of this, you can get all the sections at once and ignore the hierarchy:
             return operationData.GetAllSections();
+        }
+
+        private static Dictionary<DeviceElementUse, List<WorkingData>> GetMetersBySection(List<DeviceElementUse> sections)
+        {
+            /*
+             * Note the .ToList() invocation here. Since we will iterate through the meters (WorkingData) for every SpatialRecord that we process,
+             * we need to avoid multiple iterations of an IEnumerable. It makes a large performance difference.
+             */
+            return sections.ToDictionary(section => section, section => section.GetWorkingDatas.Invoke().ToList());
+            
+            /*
+             * If you are only interested in specific Representations, this is a good place to filter them so you do not need to sort through
+             * all of the data.
+             */
+//            return sections.ToDictionary(section => section,
+//                        section => section.GetWorkingDatas.Invoke().Where(
+//                                meter => meter.Representation.Code == RepresentationInstanceList.dtRecordingStatus.DomainId ||
+//                                         meter.Representation.Code == RepresentationInstanceList.vrDistanceTraveled.DomainId)
+//                                .ToList());
+
         }
     }
 }
