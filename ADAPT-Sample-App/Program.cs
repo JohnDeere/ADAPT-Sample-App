@@ -1,5 +1,4 @@
 ﻿using System;
-using AgGateway.ADAPT.ApplicationDataModel.ADM;
 using AgGateway.ADAPT.PluginManager;
 
 namespace ADAPT_Sample_App
@@ -16,6 +15,15 @@ namespace ADAPT_Sample_App
             var pluginLocation = AppDomain.CurrentDomain.BaseDirectory;
             var pluginManager = new PluginFactory(pluginLocation);
 
+            //When you license the John Deere ADAPT plugins, you will receive a license file and an application id.
+            //Initializing the plugin with your application id activates the license.
+            //Keep the application id in a secure place. It is associated with your company.
+            foreach (var pluginName in pluginManager.AvailablePlugins)
+            {
+                var plugin = pluginManager.GetPlugin(pluginName);
+                plugin.Initialize(_applicationId.ToString());
+            }
+            
             var datacardLocation = SampleData.GetAdmDatacard();
 
             //The plugin factory automatically detects which plugin is able to load data from the given directory.
@@ -24,18 +32,9 @@ namespace ADAPT_Sample_App
             var supportedPlugins = pluginManager.GetSupportedPlugins(datacardLocation);
             foreach (var plugin in supportedPlugins)
             {
-                InitializeWithLicense(plugin);
                 var adaptDataModels = plugin.Import(datacardLocation);
                 new AdaptDataModelProcessor().Process(adaptDataModels);
             }
-        }
-
-        //When you license the John Deere ADAPT plugins, you will receive a license file and an application id.
-        //Initializing the plugin with your application id activates the license.
-        //Keep the application id in a secure place. It is associated with your company.
-        private static void InitializeWithLicense(IPlugin plugin)
-        {
-            plugin.Initialize(_applicationId.ToString());
         }
     }
 }
