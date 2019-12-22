@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using AgGateway.ADAPT.PluginManager;
 
 namespace ADAPT_Sample_App
@@ -23,7 +24,16 @@ namespace ADAPT_Sample_App
                 var plugin = pluginManager.GetPlugin(pluginName);
                 plugin.Initialize(_applicationId.ToString());
             }
-            
+
+            //If you want to process documentation data (ie, sensor data that was collected by a machine in the field):
+            LoadDocumentationDataFromSomeDatacard(pluginManager);
+
+            //If you want to create a setup file that can be sent to a machine:
+            CreateSetupFile(pluginManager);
+        }
+
+        private static void LoadDocumentationDataFromSomeDatacard(PluginFactory pluginManager)
+        {
             var datacardLocation = SampleData.GetAdmDatacard();
 
             //The plugin factory automatically detects which plugin is able to load data from the given directory.
@@ -34,6 +44,25 @@ namespace ADAPT_Sample_App
             {
                 var adaptDataModels = plugin.Import(datacardLocation);
                 new AdaptDataModelProcessor().Process(adaptDataModels);
+            }
+        }
+
+        private static void CreateSetupFile(PluginFactory pluginManager)
+        {
+            var setupDataModel = new SetupDataCreator().PopulateDataModel();
+            
+            //You can export setup data through any plugin other than the Deere Gen4 plugin.
+            //Currently the Gen4 displays use a 2630 setup model - use the 2630 plugin to send setup data to a Gen4 display.
+            var plugin = pluginManager.GetPlugin(PluginNames.Deere2630);
+            if (plugin == null)
+            {
+                //In this case, the desired plugin failed to load. 
+                //If you have not yet licensed and received a copy of the Deere plugins, that could be why - they are not distributed with this sample code.
+            }
+            else
+            {
+                var exportDirectory = Path.Combine("C:", "temp", "ADAPT_Export_Directory");
+                plugin.Export(setupDataModel, exportDirectory.ToString());
             }
         }
     }
