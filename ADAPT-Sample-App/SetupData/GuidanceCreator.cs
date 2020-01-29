@@ -10,7 +10,14 @@ namespace ADAPT_Sample_App.SetupData
     {
         public void AddGuidanceLines(Field field, Catalog adaptCatalog)
         {
+            // Spatial coordinates are omitted in these samples. We recommend not creating new guidance lines. 
+            // The ADAPT plugins allow you to read, store, and write back guidance lines. 
+            // Note that guidance lines from external systems (particularly with non-Deere GpsSource types) may not track 
+            // correctly on Deere equipment. 
+            // It is NOT a supported use case to use Deere's ADAPT plugins to export guidance patterns to 3rd-party equipment, 
+            // or to import 3rd-party guidance patterns for use on Deere equipment.
             CreateSampleAbLine(field, adaptCatalog);
+            CreateSampleAbCurve(field, adaptCatalog);
         }
 
         private static void CreateSampleAbLine(Field field, Catalog adaptCatalog)
