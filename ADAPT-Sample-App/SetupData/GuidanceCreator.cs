@@ -18,6 +18,7 @@ namespace ADAPT_Sample_App.SetupData
             // or to import 3rd-party guidance patterns for use on Deere equipment.
             CreateSampleAbLine(field, adaptCatalog);
             CreateSampleAbCurve(field, adaptCatalog);
+            CreateCurvedTrackLine(field, adaptCatalog);
         }
 
         private static void CreateSampleAbLine(Field field, Catalog adaptCatalog)
@@ -83,5 +84,96 @@ namespace ADAPT_Sample_App.SetupData
             
             field.GuidanceGroupIds.Add(guidanceGroup.Id.ReferenceId);
         }
+
+		private void CreateCurvedTrackLine(Field field, Catalog adaptCatalog)
+		{
+			var curvedTrackName = "curved track line";
+
+			var abCurve1 = new AbCurve
+			{
+				Description = curvedTrackName,
+				GpsSource = new GpsSource { SourceType = GpsSourceEnum.DeereSF2 },
+				Shape = new List<LineString>
+				{
+					new LineString
+					{
+						Points = new List<Point>
+						{
+							//Add Points
+						}
+					}
+				}
+			};
+			adaptCatalog.GuidancePatterns.Add(abCurve1);
+
+			var abCurve2 = new AbCurve
+			{
+				Description = curvedTrackName,
+				GpsSource = new GpsSource { SourceType = GpsSourceEnum.DeereSF2 },
+				Shape = new List<LineString>
+				{
+					new LineString
+					{
+						Points = new List<Point>
+						{
+							//Add Points
+						}
+					}
+				}
+			};
+			adaptCatalog.GuidancePatterns.Add(abCurve2);
+
+			var abCurve3 = new AbCurve
+			{
+				Description = curvedTrackName,
+				GpsSource = new GpsSource { SourceType = GpsSourceEnum.DeereSF2 },
+				Shape = new List<LineString>
+				{
+					new LineString
+					{
+						Points = new List<Point>
+						{
+							//Add Points
+						}
+					}
+				}
+			};
+			adaptCatalog.GuidancePatterns.Add(abCurve3);
+
+			var guidanceGroup = new GuidanceGroup
+			{
+				Description = curvedTrackName,
+				GuidancePatternIds = new List<int>
+				{
+					abCurve1.Id.ReferenceId,
+					abCurve2.Id.ReferenceId,
+					abCurve3.Id.ReferenceId,
+				},
+				BoundingPolygon =  new MultiPolygon // Bounding polygon of all the points 
+				{
+					Polygons = new List<Polygon>
+					{
+						new Polygon
+						{
+							ExteriorRing = new LinearRing
+							{
+								Points = new List<Point>
+								{
+									new Point{}
+								}
+							}
+						}
+
+					}
+				}
+			};
+
+			field.GuidanceGroupIds = new List<int>
+			{
+				guidanceGroup.Id.ReferenceId
+			};
+
+			adaptCatalog.GuidanceGroups.Add(guidanceGroup);
+		}
     }
 }

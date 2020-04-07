@@ -77,6 +77,7 @@
     <Compile Include="SampleData.cs" />
     <Compile Include="SetupDataCreator.cs" />
     <Compile Include="SetupData\BoundaryCreator.cs" />
+    <Compile Include="SetupData\FlagCreator.cs" />
     <Compile Include="SetupData\GuidanceCreator.cs" />
   </ItemGroup>
   <ItemGroup>
